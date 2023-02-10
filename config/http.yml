@@ -13,7 +13,7 @@ http:
       rule: "Host(`dev.run`)"
       service: api@internal
       middlewares:
-        #- auth
+        - auth
       tls: {}
 
   middlewares:
@@ -35,4 +35,4 @@ http:
       basicAuth:
         removeHeader: true
         users:
-          - admin:$apr1$dtw3acs1$hytP3PXN/MW2Wwef8F6OF/
+          - 404:$apr1$of2gqL2m$LKqOkQDi006RUzJlKVhYX1
