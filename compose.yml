@@ -1,26 +1,55 @@
-version: "3.8"
-
-networks:
-  traefik:
-    external: true
+version: '3.8'
 
 services:
   traefik:
     container_name: traefik
     restart: always
     image: traefik:latest
-    networks:
-      - traefik
     ports:
-      - "80:80"
-      - "443:443"
+      - 80:80
+      - 443:443
+      - 2000:2000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./config:/etc/traefik:ro
       - ./config/tls:/config/tls:ro
+    command:
+      - --ping
+      - --api.dashboard
+      - --log.level=ERROR
+      # global
+      - --global.checknewversion=false
+      - --global.sendanonymoususage=false
+      # entrypoints
+      - --entrypoints.http.address=:80
+      - --entryPoints.http.forwardedHeaders.insecure
+      - --entrypoints.http.http.redirections.entryPoint.to=https
+      - --entrypoints.https.address=:443
+      - --entrypoints.mongo.address=:2000
+      # providers
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik
     healthcheck:
       test: traefik healthcheck --ping
       interval: 10s
       timeout: 10s
       retries: 5
       start_period: 30s
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.traefik.loadbalancer.server.port=443
+      # middlewares
+      - traefik.http.middlewares.default.digestauth.users=404:traefik:b97999fb9fed623588176b7fbaca37bf
+      - traefik.http.middlewares.default.digestauth.removeheader=true
+      # routers
+      - traefik.http.routers.traefik.entrypoints=https
+      - traefik.http.routers.traefik.tls=true
+      # - traefik.http.routers.traefik.middlewares=default
+      - traefik.http.routers.traefik.rule=Host(`traefik.dev.run`)
+      - traefik.http.routers.traefik.service=api@internal
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
